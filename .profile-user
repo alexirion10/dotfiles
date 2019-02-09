@@ -1,0 +1,62 @@
+#----------------------------
+# Common environment settings
+#----------------------------
+parse_git_branch() {
+     git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/ (\1)/'
+}
+
+export PS1="\e[35;1m\u@\h \[\033[32m\]\w\[\033[33m\]\$(parse_git_branch)\[\033[00m\] $ "
+# export PS1='[\u@\h:\w]$ '  #Prompt: (user@hostname:workingpath $)
+
+function tmux() {
+  local tmux=$(type -fp tmux)
+  case "$1" in 
+    update-environment|update-env|env-update)
+      local v
+      while read v; do
+        if [[$v ==-* ]]; then 
+          unset ${v/#-/}
+        else
+          v=${v/=/=\"}
+          v=${v/%/\"}
+          eval export $v
+        fi
+      done < <(tmux show-environment)
+      ;;
+    *)
+      $tmux "$@"
+      ;;
+   esac
+}
+
+if [[ `hostname -s` = unixscrn* ]] && [ `which tmux 2> /dev/null` -a -z "$TMUX" ]; then
+  tmux attach-session -t work || tmux new-session -s work
+  tmux update-env
+fi
+
+export PATH=/home/user/airion/.local/bin/:$PATH
+
+# Enable color support for various commands.
+if [ -x /usr/bin/dircolors ]; then
+    test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
+    alias ls='ls -Alh --color=auto'
+    alias dir='dir --color=auto'
+    alias vdir='vdir --color=auto'
+    alias grep='grep --color=auto'
+    alias fgrep='fgrep --color=auto'
+    alias egrep='egrep --color=auto'
+
+fi
+
+alias lsd='ls -d */'
+alias lc='wc -l'
+alias vi='vim'
+alias c='clear'
+alias folder='find . -maxdepth 1 -type d -print | xargs du -sk | sort -rf'
+alias history='history | grep '
+alias mktar='tar -cvf'
+alias untar='tar -xvf'
+alias ..='cd ..'
+
+export EDITOR=nano
+
